@@ -332,3 +332,7 @@
 这轮 `48` 条自动评测说明：
 
 **在当前任务上，LoRA 微调对严格 JSON/schema 输出的提升是决定性的；更严格的 prompt 本身只能小幅改善 base model，但不足以替代微调。**
+
+后续基于内容质量的 pairwise judge 结果见：
+
+- [2026-04-29-pairwise-judge-results.md](/hy-tmp/llm-lab/docs/2026-04-29-pairwise-judge-results.md)
