@@ -31,7 +31,8 @@ plot_loss: true
 overwrite_output_dir: true
 save_total_limit: 2
 save_only_model: false
-report_to: none
+report_to: wandb
+run_name: qwen25-05b-smoke-lora-sft-5060ti
 
 ### train
 per_device_train_batch_size: 1

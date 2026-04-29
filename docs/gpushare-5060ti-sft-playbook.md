@@ -239,3 +239,54 @@ export USE_MODELSCOPE_HUB=1
 5. 只有前面都顺了，再尝试 `1.5B`
 
 如果你现在是在 `LLaMA-Factory` 刚装好的状态，先把 smoke 跑出来比继续写计划更重要。
+
+## 10. 可选：接入 W&B
+
+如果你已经成功执行过：
+
+```bash
+wandb login
+```
+
+通常不需要先去 W&B 网站手动创建项目。  
+在第一次训练真正开始上报指标时，W&B 会自动创建 project 和 run。
+
+当前两份 YAML 已经启用了：
+
+```yaml
+report_to: wandb
+```
+
+并且设置了默认 `run_name`。
+
+推荐在训练前额外导出两个环境变量，这样项目组织会更清晰：
+
+```bash
+export WANDB_PROJECT=llm-lab
+export WANDB_RUN_GROUP=5060ti-sft
+```
+
+如果你想把这次机器、模型和阶段都写进标签，可以再加：
+
+```bash
+export WANDB_TAGS=5060ti,qwen2.5-0.5b,lora,sft
+```
+
+完整示例：
+
+```bash
+cd /hy-tmp/LLaMA-Factory
+source .venv/bin/activate
+export USE_MODELSCOPE_HUB=1
+export WANDB_PROJECT=llm-lab
+export WANDB_RUN_GROUP=5060ti-sft
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train /hy-tmp/llm-lab/configs/llamafactory/5060ti_qwen25_05b_full_lora_sft.yaml
+```
+
+如果后面网络不稳定，也可以临时离线记录：
+
+```bash
+export WANDB_MODE=offline
+```
+
+等网络稳定后再手动同步。

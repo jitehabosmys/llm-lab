@@ -153,7 +153,7 @@ Num examples = 48
 - `num_key_value_heads: 2`
 - `vocab_size: 151936`
 
-这与 `Qwen2.5-0.5B-Instruct` 的小参数量级相符。
+这与 `Qwen2.5-0.5B-Instruct` 的小参数量级相符。注意这里用到了 GQA (Grouped-Query Attention)：将 Query 分组，每一组 Query 共享一对 K 和 V 。每 7 个 Q 共享一对 KV
 
 同时日志中还能确认：
 
