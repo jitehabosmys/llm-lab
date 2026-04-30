@@ -19,6 +19,8 @@
 
 - [qwen25_05b_base_hf_infer.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_05b_base_hf_infer.yaml)
 - [qwen25_05b_full_lora_hf_infer.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_05b_full_lora_hf_infer.yaml)
+- [qwen25_3b_base_hf_infer.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_3b_base_hf_infer.yaml)
+- [qwen25_3b_full_lora_hf_infer.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_3b_full_lora_hf_infer.yaml)
 - [qwen25_05b_base_hf_infer_strict_json_prompt.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_05b_base_hf_infer_strict_json_prompt.yaml)
 - [qwen25_05b_full_lora_hf_infer_strict_json_prompt.yaml](/hy-tmp/llm-lab/configs/llamafactory/qwen25_05b_full_lora_hf_infer_strict_json_prompt.yaml)
 
@@ -89,6 +91,15 @@ cd /hy-tmp/LLaMA-Factory
 source .venv/bin/activate
 export USE_MODELSCOPE_HUB=1
 python /hy-tmp/llm-lab/scripts/run_inference_eval.py --matrix both --max-samples 10
+```
+
+如果要跑 `Qwen2.5-3B` 的默认 prompt base/lora 矩阵：
+
+```bash
+cd /hy-tmp/LLaMA-Factory
+source .venv/bin/activate
+export USE_MODELSCOPE_HUB=1
+python /hy-tmp/llm-lab/scripts/run_inference_eval.py --matrix qwen25_3b_default_prompt --max-samples 10
 ```
 
 ## 4. 输出内容

@@ -25,6 +25,7 @@ DIMENSIONS = [
     "missing_info_quality",
     "overall_engineering_quality",
 ]
+SCORE_RANGE = [1, 2, 3, 4, 5]
 
 
 def load_env_file(path: Path) -> None:
@@ -203,6 +204,10 @@ def make_gate_result(
         "winner": winner,
         "winner_confidence": confidence,
         "dimension_winners": {dimension: "tie" for dimension in DIMENSIONS},
+        "dimension_scores": {
+            dimension: {"A_score": None, "B_score": None} for dimension in DIMENSIONS
+        },
+        "overall_scores": {"A_score": None, "B_score": None},
         "reason": reason,
         "used_reference": use_reference,
         "candidate_a_label": label_a,
@@ -279,9 +284,42 @@ def judge_response_schema() -> dict[str, Any]:
                 "properties": {dimension: {"type": "string", "enum": ["A", "B", "tie"]} for dimension in DIMENSIONS},
                 "required": DIMENSIONS,
             },
+            "dimension_scores": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    dimension: {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "A_score": {"type": "integer", "enum": SCORE_RANGE},
+                            "B_score": {"type": "integer", "enum": SCORE_RANGE},
+                        },
+                        "required": ["A_score", "B_score"],
+                    }
+                    for dimension in DIMENSIONS
+                },
+                "required": DIMENSIONS,
+            },
+            "overall_scores": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "A_score": {"type": "integer", "enum": SCORE_RANGE},
+                    "B_score": {"type": "integer", "enum": SCORE_RANGE},
+                },
+                "required": ["A_score", "B_score"],
+            },
             "reason": {"type": "string"},
         },
-        "required": ["winner", "winner_confidence", "dimension_winners", "reason"],
+        "required": [
+            "winner",
+            "winner_confidence",
+            "dimension_winners",
+            "dimension_scores",
+            "overall_scores",
+            "reason",
+        ],
     }
 
 
@@ -344,6 +382,8 @@ async def judge_one(
         "winner": parsed["winner"],
         "winner_confidence": parsed["winner_confidence"],
         "dimension_winners": parsed["dimension_winners"],
+        "dimension_scores": parsed["dimension_scores"],
+        "overall_scores": parsed["overall_scores"],
         "reason": parsed["reason"],
         "used_reference": use_reference,
         "candidate_a_label": label_a,
@@ -440,6 +480,7 @@ def summarize_results(results: list[dict[str, Any]], label_a: str, label_b: str)
         }
 
     dimension_counts: dict[str, dict[str, int]] = {}
+    dimension_score_sums: dict[str, dict[str, float]] = defaultdict(lambda: {"A_score_sum": 0.0, "B_score_sum": 0.0, "count": 0})
     for dimension in DIMENSIONS:
         counts = Counter(result["dimension_winners"][dimension] for result in results)
         dimension_counts[dimension] = {
@@ -447,7 +488,48 @@ def summarize_results(results: list[dict[str, Any]], label_a: str, label_b: str)
             label_b: counts["B"],
             "tie": counts["tie"],
         }
+        for result in results:
+            scores = result.get("dimension_scores", {}).get(dimension, {})
+            a_score = scores.get("A_score")
+            b_score = scores.get("B_score")
+            if isinstance(a_score, int) and isinstance(b_score, int):
+                dimension_score_sums[dimension]["A_score_sum"] += a_score
+                dimension_score_sums[dimension]["B_score_sum"] += b_score
+                dimension_score_sums[dimension]["count"] += 1
     summary["dimension_winner_counts"] = dimension_counts
+
+    dimension_score_averages: dict[str, Any] = {}
+    for dimension, payload in dimension_score_sums.items():
+        count = payload["count"]
+        if count > 0:
+            a_avg = payload["A_score_sum"] / count
+            b_avg = payload["B_score_sum"] / count
+            dimension_score_averages[dimension] = {
+                label_a: round(a_avg, 4),
+                label_b: round(b_avg, 4),
+                "delta_b_minus_a": round(b_avg - a_avg, 4),
+                "count": count,
+            }
+    summary["dimension_score_averages"] = dimension_score_averages
+
+    overall_a_scores = []
+    overall_b_scores = []
+    for result in results:
+        overall = result.get("overall_scores", {})
+        a_score = overall.get("A_score")
+        b_score = overall.get("B_score")
+        if isinstance(a_score, int) and isinstance(b_score, int):
+            overall_a_scores.append(a_score)
+            overall_b_scores.append(b_score)
+    if overall_a_scores and overall_b_scores:
+        a_avg = sum(overall_a_scores) / len(overall_a_scores)
+        b_avg = sum(overall_b_scores) / len(overall_b_scores)
+        summary["overall_score_averages"] = {
+            label_a: round(a_avg, 4),
+            label_b: round(b_avg, 4),
+            "delta_b_minus_a": round(b_avg - a_avg, 4),
+            "count": len(overall_a_scores),
+        }
 
     summary["failed_or_tied_sample_ids"] = {
         "tie": [result["sample_id"] for result in results if result["winner"] == "tie"],

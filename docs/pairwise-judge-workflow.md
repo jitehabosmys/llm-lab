@@ -96,6 +96,8 @@ judge 返回：
 - `winner`: `A | B | tie`
 - `winner_confidence`: `low | medium | high`
 - `dimension_winners`
+- `dimension_scores`
+- `overall_scores`
 - `reason`
 
 ## 6. 当前 judge 维度
@@ -119,6 +121,32 @@ judge 返回：
 ### `overall_engineering_quality`
 
 整体是否像一个合格的训练/部署问题诊断助手：克制、结构清晰、优先级合理。
+
+## 6.1 分数输出
+
+除了维度 winner 之外，当前 judge 还会为每个维度输出：
+
+- `A_score: 1-5`
+- `B_score: 1-5`
+
+并且额外输出：
+
+- `overall_scores.A_score`
+- `overall_scores.B_score`
+
+这些分数的主要用途不是替代 pairwise winner，而是：
+
+- 观察不同模型规模之间的平均分变化
+- 估计 `0.5B -> 3B -> 4B` 的边际收益
+- 作为“何时停止继续 scale up、转向 DPO”的辅助信号
+
+建议把分数主要用于：
+
+- 平均分
+- 平均分差
+- 边际提升趋势
+
+而不是过度解读单条样本的绝对打分。
 
 ## 7. A/B 顺序偏置处理
 
@@ -164,6 +192,18 @@ judge 返回：
 
 这份文件更适合后续优先进入 DPO 数据池。
 
+### `judge_summary.json` 中新增的分数统计
+
+当前汇总中还会新增：
+
+- `dimension_score_averages`
+- `overall_score_averages`
+
+你可以用这些统计：
+
+- 看大模型相对小模型到底“高多少分”
+- 判断继续 scale up 的收益是否开始变小
+
 ## 10. 最小运行命令
 
 以默认版 LoRA 和 strict 版 LoRA 做对比：
@@ -204,3 +244,25 @@ python scripts/run_pairwise_judge.py ... --use-reference
 
 - strict prompt 对 LoRA 是否真的带来内容质量提升
 - LoRA 相比 base 的内容质量提升究竟有多明显
+
+如果已经完成 `3B` 的 SFT 和自动规则评测，下一步最推荐的新增比较是：
+
+3. `default_prompt_lora (0.5B)` vs `qwen25_3b_default_prompt_lora`
+
+这组比较最适合回答：
+
+- 更大的模型在完成同类 SFT 后，内容质量是否明显更强
+- 后续 DPO 主线是否应从 `0.5B` 转向 `3B`
+
+推荐命令模板：
+
+```bash
+cd /hy-tmp/llm-lab
+source .venv/bin/activate
+python scripts/run_pairwise_judge.py \
+  --candidate-a /hy-tmp/llm-lab/20260429_164620/default_prompt_lora_results.jsonl \
+  --candidate-b /hy-tmp/outputs/llm-lab-inference-eval/20260430_170248/qwen25_3b_default_prompt_lora_results.jsonl \
+  --label-a qwen25_05b_default_prompt_lora \
+  --label-b qwen25_3b_default_prompt_lora \
+  --concurrency 4
+```

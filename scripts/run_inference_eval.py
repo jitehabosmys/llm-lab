@@ -25,6 +25,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EVAL_DATA = REPO_ROOT / "data/llamafactory/diagnosis_sft_eval_alpaca.json"
 DEFAULT_BASE_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_05b_base_hf_infer.yaml"
 DEFAULT_LORA_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_05b_full_lora_hf_infer.yaml"
+DEFAULT_3B_BASE_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_3b_base_hf_infer.yaml"
+DEFAULT_3B_LORA_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_3b_full_lora_hf_infer.yaml"
 DEFAULT_STRICT_EVAL_DATA = REPO_ROOT / "data/llamafactory/diagnosis_sft_strict_json_prompt_eval_alpaca.json"
 DEFAULT_STRICT_BASE_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_05b_base_hf_infer_strict_json_prompt.yaml"
 DEFAULT_STRICT_LORA_CONFIG = REPO_ROOT / "configs/llamafactory/qwen25_05b_full_lora_hf_infer_strict_json_prompt.yaml"
@@ -66,13 +68,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--matrix",
-        choices=["default_prompt", "strict_json_prompt", "both"],
+        choices=["default_prompt", "strict_json_prompt", "both", "qwen25_3b_default_prompt"],
         default="default_prompt",
         help=(
             "Predefined evaluation matrix. "
             "`default_prompt` runs the existing base/lora pair; "
             "`strict_json_prompt` runs the strict-prompt base/lora pair; "
-            "`both` runs all four variants. Ignored when --variant is provided."
+            "`both` runs all four 0.5B variants; "
+            "`qwen25_3b_default_prompt` runs the 3B base/lora pair. "
+            "Ignored when --variant is provided."
         ),
     )
     parser.add_argument(
@@ -333,6 +337,19 @@ def get_predefined_variants(matrix: str) -> list[VariantSpec]:
                 name="strict_json_prompt_lora",
                 config_path=DEFAULT_STRICT_LORA_CONFIG,
                 eval_data_path=DEFAULT_STRICT_EVAL_DATA,
+            ),
+        ]
+    if matrix == "qwen25_3b_default_prompt":
+        return [
+            VariantSpec(
+                name="qwen25_3b_default_prompt_base",
+                config_path=DEFAULT_3B_BASE_CONFIG,
+                eval_data_path=DEFAULT_EVAL_DATA,
+            ),
+            VariantSpec(
+                name="qwen25_3b_default_prompt_lora",
+                config_path=DEFAULT_3B_LORA_CONFIG,
+                eval_data_path=DEFAULT_EVAL_DATA,
             ),
         ]
     raise ValueError(f"Unknown matrix: {matrix}")
