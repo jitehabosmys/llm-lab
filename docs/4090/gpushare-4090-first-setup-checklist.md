@@ -18,6 +18,7 @@
 
 - [2026-05-01-qwen3-4b-strict-repro-on-4090.md](/hy-tmp/llm-lab/docs/4090/2026-05-01-qwen3-4b-strict-repro-on-4090.md)
 - [2026-05-01-qwen3-8b-qlora-sft-log.md](/hy-tmp/llm-lab/docs/4090/2026-05-01-qwen3-8b-qlora-sft-log.md)
+- [2026-05-02-qwen3-14b-qlora-sft-log.md](/hy-tmp/llm-lab/docs/4090/2026-05-02-qwen3-14b-qlora-sft-log.md)
 
 ## 1. 当前阶段的明确策略
 

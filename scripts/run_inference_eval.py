@@ -150,6 +150,18 @@ def parse_scalar(raw: str) -> Any:
     return raw
 
 
+def normalize_runtime_overrides(config: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(config)
+    device_map = normalized.get("device_map")
+    if isinstance(device_map, str):
+        lowered = device_map.strip().lower()
+        if lowered == "cuda:0":
+            normalized["device_map"] = {"": 0}
+        elif lowered == "cpu":
+            normalized["device_map"] = {"": "cpu"}
+    return normalized
+
+
 def load_eval_records(path: Path, max_samples: int) -> list[dict[str, Any]]:
     if path.suffix == ".jsonl":
         records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -444,6 +456,7 @@ def run_variant(
 ) -> list[dict[str, Any]]:
     from llamafactory.chat import ChatModel
 
+    config = normalize_runtime_overrides(config)
     log(f"Loading variant `{name}`")
     chat_model = ChatModel(config)
     if not bool(config.get("do_sample", False)):
